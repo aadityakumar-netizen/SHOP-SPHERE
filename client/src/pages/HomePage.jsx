@@ -71,7 +71,19 @@ export default function HomePage() {
       phase: 'Phase 6',
       title: 'Order History & Admin Dashboard',
       desc: 'Customer order tracking, admin inventory management, and fulfillment status state machine.',
+      status: 'completed',
+    },
+    {
+      phase: 'Phase 7',
+      title: 'Security, Automated Tests & Polish',
+      desc: 'End-to-end testing, error handling, responsive UI, Postman collection, and documentation.',
       status: 'active',
+    },
+    {
+      phase: 'Phase 8',
+      title: 'Deployment Preparation',
+      desc: 'Configuration for Vercel (frontend), Render (backend), and MongoDB Atlas.',
+      status: 'upcoming',
     },
   ];
 
@@ -82,7 +94,7 @@ export default function HomePage() {
         <div className="relative z-10 max-w-3xl space-y-5">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-xs font-semibold">
             <Zap className="w-3.5 h-3.5 text-amber-400" />
-            Phase 2: Product Catalogue & Seeding Live
+            Phase 7: Security Audit & Automated Tests Verified (35/35 Passed)
           </div>
           <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
             ShopSphere <br />
