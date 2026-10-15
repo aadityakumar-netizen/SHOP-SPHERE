@@ -65,13 +65,13 @@ export default function HomePage() {
       phase: 'Phase 5',
       title: 'Razorpay Test Checkout & Webhooks',
       desc: 'Order creation, official SDK checkout, HMAC-SHA256 signature verification, and idempotent webhooks.',
-      status: 'active',
+      status: 'completed',
     },
     {
       phase: 'Phase 6',
       title: 'Order History & Admin Dashboard',
       desc: 'Customer order tracking, admin inventory management, and fulfillment status state machine.',
-      status: 'upcoming',
+      status: 'active',
     },
   ];
 

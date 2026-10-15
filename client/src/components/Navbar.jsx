@@ -10,6 +10,7 @@ import {
   Shield,
   ChevronDown,
   UserCheck,
+  Package,
 } from 'lucide-react';
 
 export default function Navbar() {
@@ -77,6 +78,19 @@ export default function Navbar() {
             >
               Catalogue
             </NavLink>
+            {isAdmin && (
+              <NavLink
+                to="/admin"
+                className={({ isActive }) =>
+                  isActive
+                    ? 'text-purple-600 font-bold flex items-center gap-1'
+                    : 'text-purple-600/80 hover:text-purple-700 font-semibold flex items-center gap-1 transition-colors'
+                }
+              >
+                <Shield className="w-3.5 h-3.5" />
+                <span>Admin Portal</span>
+              </NavLink>
+            )}
           </nav>
 
           {/* Right Action Area */}
@@ -133,13 +147,21 @@ export default function Navbar() {
                       <User className="w-3.5 h-3.5" /> My Profile
                     </Link>
 
+                    <Link
+                      to="/orders"
+                      onClick={() => setDropdownOpen(false)}
+                      className="w-full px-4 py-2 text-slate-700 hover:bg-slate-50 hover:text-indigo-600 flex items-center gap-2 transition-colors"
+                    >
+                      <Package className="w-3.5 h-3.5 text-indigo-600" /> My Orders
+                    </Link>
+
                     {isAdmin && (
                       <Link
-                        to="/profile"
+                        to="/admin"
                         onClick={() => setDropdownOpen(false)}
-                        className="w-full px-4 py-2 text-purple-700 hover:bg-purple-50 flex items-center gap-2 transition-colors font-medium"
+                        className="w-full px-4 py-2 text-purple-700 hover:bg-purple-50 flex items-center gap-2 transition-colors font-medium border-t border-slate-100"
                       >
-                        <Shield className="w-3.5 h-3.5 text-purple-600" /> Admin Privileges
+                        <Shield className="w-3.5 h-3.5 text-purple-600" /> Admin Dashboard
                       </Link>
                     )}
 
