@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 import {
   ShoppingBag,
   ShoppingCart,
@@ -13,6 +14,7 @@ import {
 
 export default function Navbar() {
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
+  const { totalItemsCount } = useCart();
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -79,14 +81,20 @@ export default function Navbar() {
 
           {/* Right Action Area */}
           <div className="flex items-center gap-3">
-            {/* Cart Icon (Phase 4 Ready) */}
+            {/* Cart Icon with Live Count */}
             <Link
-              to="/products"
-              className="relative p-2 text-slate-600 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors"
-              title="Shopping Cart (Phase 4)"
+              to="/cart"
+              className="relative p-2 text-slate-600 hover:text-indigo-600 hover:bg-slate-100 rounded-xl transition-colors"
+              title="Shopping Cart"
             >
               <ShoppingCart className="w-5 h-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-indigo-600 rounded-full"></span>
+              {totalItemsCount > 0 ? (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-indigo-600 text-white font-bold text-[10px] rounded-full flex items-center justify-center shadow-sm">
+                  {totalItemsCount}
+                </span>
+              ) : (
+                <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-slate-300 rounded-full"></span>
+              )}
             </Link>
 
             {/* Auth Area */}

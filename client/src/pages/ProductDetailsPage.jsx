@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import productService from '../services/productService';
+import { useCart } from '../context/CartContext';
 import { formatCurrency } from '../utils/formatters';
 import {
   Star,
@@ -20,6 +21,7 @@ export default function ProductDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
 
+  const { addToCart } = useCart();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -57,6 +59,7 @@ export default function ProductDetailsPage() {
 
   const handleAddToCart = () => {
     if (!product || product.stock === 0) return;
+    addToCart(product, quantity);
     setAddedToast(true);
     setTimeout(() => {
       setAddedToast(false);

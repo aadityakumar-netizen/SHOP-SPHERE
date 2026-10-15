@@ -53,13 +53,13 @@ export default function HomePage() {
       phase: 'Phase 3',
       title: 'Secure JWT Auth & Roles',
       desc: 'User registration, login, bcrypt password hashing, auth middleware, and role-based permissions.',
-      status: 'active',
+      status: 'completed',
     },
     {
       phase: 'Phase 4',
       title: 'Cart & Server Price Validation',
       desc: 'Shopping cart with state management, integer paise subtotal calculations, and stock availability checks.',
-      status: 'upcoming',
+      status: 'active',
     },
     {
       phase: 'Phase 5',

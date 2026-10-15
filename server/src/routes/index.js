@@ -2,6 +2,7 @@ import express from 'express';
 import healthRouter from './health.routes.js';
 import productRouter from './product.routes.js';
 import authRouter from './auth.routes.js';
+import orderRouter from './order.routes.js';
 
 const router = express.Router();
 
@@ -14,6 +15,9 @@ router.use('/products', productRouter);
 // Authentication endpoints
 router.use('/auth', authRouter);
 
+// Order management endpoints
+router.use('/orders', orderRouter);
+
 // Base API route
 router.get('/', (req, res) => {
   res.json({
@@ -23,13 +27,10 @@ router.get('/', (req, res) => {
       health: '/api/v1/health',
       products: '/api/v1/products',
       categories: '/api/v1/products/categories',
-      auth: {
-        register: 'POST /api/v1/auth/register',
-        login: 'POST /api/v1/auth/login',
-        me: 'GET /api/v1/auth/me',
-      },
+      auth: '/api/v1/auth',
+      orders: '/api/v1/orders',
     },
-    phase: 'Phase 3: JWT Authentication & Role-Based Access Active',
+    phase: 'Phase 4: Shopping Cart & Order Creation with Stock Validation Active',
   });
 });
 
