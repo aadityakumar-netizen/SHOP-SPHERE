@@ -77,13 +77,13 @@ export default function HomePage() {
       phase: 'Phase 7',
       title: 'Security, Automated Tests & Polish',
       desc: 'End-to-end testing, error handling, responsive UI, Postman collection, and documentation.',
-      status: 'active',
+      status: 'completed',
     },
     {
       phase: 'Phase 8',
       title: 'Deployment Preparation',
       desc: 'Configuration for Vercel (frontend), Render (backend), and MongoDB Atlas.',
-      status: 'upcoming',
+      status: 'completed',
     },
   ];
 
@@ -93,8 +93,8 @@ export default function HomePage() {
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-900 via-indigo-950 to-slate-950 text-white p-8 sm:p-12 shadow-xl border border-indigo-800/40">
         <div className="relative z-10 max-w-3xl space-y-5">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-xs font-semibold">
-            <Zap className="w-3.5 h-3.5 text-amber-400" />
-            Phase 7: Security Audit & Automated Tests Verified (35/35 Passed)
+            <Zap className="w-3.5 h-3.5 text-emerald-400" />
+            ShopSphere Complete & Placement-Ready (Phases 1–8 Fully Built)
           </div>
           <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
             ShopSphere <br />
