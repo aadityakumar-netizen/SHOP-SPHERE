@@ -47,13 +47,13 @@ export default function HomePage() {
       phase: 'Phase 2',
       title: 'Catalogue, Seeding & Filters',
       desc: 'Mongoose Product model, realistic seed script, categories, search, filtering, and product details.',
-      status: 'active',
+      status: 'completed',
     },
     {
       phase: 'Phase 3',
       title: 'Secure JWT Auth & Roles',
       desc: 'User registration, login, bcrypt password hashing, auth middleware, and role-based permissions.',
-      status: 'upcoming',
+      status: 'active',
     },
     {
       phase: 'Phase 4',

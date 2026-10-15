@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import connectDB from '../src/config/db.js';
 import Product from '../src/models/Product.js';
+import User from '../src/models/User.js';
 
 const sampleProducts = [
   // --- Audio ---
@@ -210,20 +211,33 @@ async function seedDatabase() {
     const categories = await Product.distinct('category');
     console.log(' -', categories.join(', '));
 
-    console.log('\nSample Product Snapshot:');
-    console.log({
-      id: inserted[0]._id,
-      name: inserted[0].name,
-      slug: inserted[0].slug,
-      category: inserted[0].category,
-      pricePaise: inserted[0].pricePaise,
-      priceRupees: inserted[0].priceRupees,
-      stock: inserted[0].stock,
+    console.log('\n[SEED] Seeding demo user accounts...');
+    await User.deleteMany({});
+
+    const adminPasswordHash = await User.hashPassword('Admin@12345');
+    const customerPasswordHash = await User.hashPassword('Customer@12345');
+
+    const adminUser = await User.create({
+      name: 'ShopSphere Admin',
+      email: 'admin@shopsphere.dev',
+      passwordHash: adminPasswordHash,
+      role: 'admin',
     });
+
+    const customerUser = await User.create({
+      name: 'Aadit Customer',
+      email: 'customer@shopsphere.dev',
+      passwordHash: customerPasswordHash,
+      role: 'customer',
+    });
+
+    console.log('[SEED SUCCESS] Demo users created:');
+    console.log(`  Admin    : admin@shopsphere.dev (Password: Admin@12345) -> role: ${adminUser.role}`);
+    console.log(`  Customer : customer@shopsphere.dev (Password: Customer@12345) -> role: ${customerUser.role}`);
 
     process.exit(0);
   } catch (error) {
-    console.error('[SEED ERROR] Failed to seed products:', error);
+    console.error('[SEED ERROR] Failed to seed database:', error);
     process.exit(1);
   }
 }

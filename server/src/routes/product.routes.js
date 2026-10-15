@@ -7,17 +7,18 @@ import {
   updateProduct,
   deleteProduct,
 } from '../controllers/product.controller.js';
+import { requireAuth, requireAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Public routes
+// Public catalogue routes
 router.get('/', getProducts);
 router.get('/categories', getCategories);
 router.get('/:id', getProductById);
 
-// Admin-managed routes (Admin authorization middleware will be integrated in Phase 3)
-router.post('/', createProduct);
-router.patch('/:id', updateProduct);
-router.delete('/:id', deleteProduct);
+// Admin-protected routes (requires authenticated user with admin role)
+router.post('/', requireAuth, requireAdmin, createProduct);
+router.patch('/:id', requireAuth, requireAdmin, updateProduct);
+router.delete('/:id', requireAuth, requireAdmin, deleteProduct);
 
 export default router;
