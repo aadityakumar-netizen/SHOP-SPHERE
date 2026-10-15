@@ -59,13 +59,13 @@ export default function HomePage() {
       phase: 'Phase 4',
       title: 'Cart & Server Price Validation',
       desc: 'Shopping cart with state management, integer paise subtotal calculations, and stock availability checks.',
-      status: 'active',
+      status: 'completed',
     },
     {
       phase: 'Phase 5',
       title: 'Razorpay Test Checkout & Webhooks',
       desc: 'Order creation, official SDK checkout, HMAC-SHA256 signature verification, and idempotent webhooks.',
-      status: 'upcoming',
+      status: 'active',
     },
     {
       phase: 'Phase 6',
