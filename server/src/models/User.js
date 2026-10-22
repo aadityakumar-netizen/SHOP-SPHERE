@@ -73,6 +73,7 @@ userSchema.methods.generateAuthToken = function () {
     env.JWT_SECRET,
     {
       expiresIn: env.JWT_EXPIRES_IN || '7d',
+      algorithm: 'HS256',
     }
   );
 };

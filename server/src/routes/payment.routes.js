@@ -3,6 +3,7 @@ import rateLimit from 'express-rate-limit';
 import {
   createRazorpayOrder,
   verifyPayment,
+  logPaymentFailure,
   handleWebhook,
 } from '../controllers/payment.controller.js';
 import { requireAuth } from '../middleware/auth.js';
@@ -24,6 +25,7 @@ const paymentRateLimiter = rateLimit({
 // Authenticated payment lifecycle routes
 router.post('/create-order', paymentRateLimiter, requireAuth, createRazorpayOrder);
 router.post('/verify', paymentRateLimiter, requireAuth, verifyPayment);
+router.post('/log-failure', paymentRateLimiter, requireAuth, logPaymentFailure);
 
 // Razorpay webhook endpoint (cryptographically authenticated via x-razorpay-signature on req.rawBody)
 router.post('/webhook', paymentRateLimiter, handleWebhook);

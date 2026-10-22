@@ -184,12 +184,83 @@ export const updateProduct = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Invalid product ID format' });
     }
 
-    const updateData = { ...req.body };
-    if (updateData.pricePaise !== undefined) {
-      updateData.pricePaise = Math.round(Number(updateData.pricePaise));
+    const allowedFields = [
+      'name',
+      'description',
+      'category',
+      'pricePaise',
+      'imageUrl',
+      'stock',
+      'rating',
+      'isActive',
+    ];
+
+    const submittedFields = Object.keys(req.body || {});
+    const unsupportedFields = submittedFields.filter(
+      (field) => !allowedFields.includes(field)
+    );
+
+    if (unsupportedFields.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Unsupported product fields.',
+        fields: unsupportedFields,
+      });
     }
+
+    const updateData = {};
+
+    for (const field of allowedFields) {
+      if (req.body[field] !== undefined) {
+        updateData[field] = req.body[field];
+      }
+    }
+
+    if (updateData.pricePaise !== undefined) {
+      updateData.pricePaise = Number(updateData.pricePaise);
+
+      if (
+        !Number.isSafeInteger(updateData.pricePaise) ||
+        updateData.pricePaise < 100
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: 'Price must be a whole number of paise and at least 100.',
+        });
+      }
+    }
+
     if (updateData.stock !== undefined) {
-      updateData.stock = Math.round(Number(updateData.stock));
+      updateData.stock = Number(updateData.stock);
+
+      if (!Number.isSafeInteger(updateData.stock) || updateData.stock < 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Stock must be a non-negative whole number.',
+        });
+      }
+    }
+
+    if (updateData.rating !== undefined) {
+      updateData.rating = Number(updateData.rating);
+
+      if (
+        !Number.isFinite(updateData.rating) ||
+        updateData.rating < 0 ||
+        updateData.rating > 5
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: 'Rating must be between 0 and 5.',
+        });
+      }
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No supported product fields provided.',
+      });
     }
 
     const product = await Product.findByIdAndUpdate(id, updateData, {

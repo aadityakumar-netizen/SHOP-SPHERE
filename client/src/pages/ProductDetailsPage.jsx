@@ -11,10 +11,9 @@ import {
   ArrowLeft,
   Check,
   ShoppingCart,
+  Zap,
   AlertCircle,
-  Plus,
-  Minus,
-  CreditCard,
+  Lock,
 } from 'lucide-react';
 
 export default function ProductDetailsPage() {
@@ -49,36 +48,34 @@ export default function ProductDetailsPage() {
     fetchProduct();
   }, [id]);
 
-  const handleQuantityChange = (delta) => {
-    if (!product) return;
-    const newQty = quantity + delta;
-    if (newQty >= 1 && newQty <= product.stock) {
-      setQuantity(newQty);
-    }
-  };
-
   const handleAddToCart = () => {
     if (!product || product.stock === 0) return;
     addToCart(product, quantity);
     setAddedToast(true);
     setTimeout(() => {
       setAddedToast(false);
-    }, 2500);
+    }, 2000);
+  };
+
+  const handleBuyNow = () => {
+    if (!product || product.stock === 0) return;
+    addToCart(product, quantity);
+    navigate('/checkout');
   };
 
   if (loading) {
     return (
-      <div className="py-12 max-w-5xl mx-auto space-y-8 animate-pulse">
-        <div className="h-6 bg-slate-200 rounded w-1/4"></div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-          <div className="aspect-square bg-slate-200 rounded-3xl"></div>
+      <div className="py-8 max-w-6xl mx-auto space-y-6 animate-pulse">
+        <div className="h-4 bg-slate-200 rounded w-1/4"></div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="aspect-square bg-slate-200 rounded-lg"></div>
           <div className="space-y-4">
-            <div className="h-8 bg-slate-200 rounded w-3/4"></div>
-            <div className="h-5 bg-slate-200 rounded w-1/3"></div>
-            <div className="h-10 bg-slate-200 rounded w-1/2"></div>
-            <div className="h-24 bg-slate-200 rounded"></div>
-            <div className="h-12 bg-slate-200 rounded w-full"></div>
+            <div className="h-6 bg-slate-200 rounded w-3/4"></div>
+            <div className="h-4 bg-slate-200 rounded w-1/3"></div>
+            <div className="h-8 bg-slate-200 rounded w-1/2"></div>
+            <div className="h-20 bg-slate-200 rounded"></div>
           </div>
+          <div className="h-64 bg-slate-200 rounded-lg"></div>
         </div>
       </div>
     );
@@ -86,17 +83,17 @@ export default function ProductDetailsPage() {
 
   if (error || !product) {
     return (
-      <div className="py-16 text-center max-w-lg mx-auto bg-white rounded-3xl border border-slate-200 p-8 shadow-sm">
-        <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto mb-4">
-          <AlertCircle className="w-7 h-7" />
+      <div className="py-16 text-center max-w-md mx-auto bg-white rounded-lg border border-slate-200 p-8 shadow-sm">
+        <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mx-auto mb-3">
+          <AlertCircle className="w-6 h-6" />
         </div>
-        <h2 className="text-xl font-bold text-slate-900 mb-1">Product Not Found</h2>
-        <p className="text-sm text-slate-500 mb-6">{error || 'This product does not exist or has been removed.'}</p>
+        <h2 className="text-lg font-bold text-slate-900 mb-1">Product Not Found</h2>
+        <p className="text-xs text-slate-500 mb-5">{error || 'This product does not exist or is currently unavailable.'}</p>
         <Link
           to="/products"
-          className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+          className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-md bg-amber-400 hover:bg-amber-500 text-slate-950 transition-colors shadow-sm"
         >
-          <ArrowLeft className="w-4 h-4" /> Back to Catalogue
+          <ArrowLeft className="w-3.5 h-3.5" /> Back to Products
         </Link>
       </div>
     );
@@ -106,223 +103,215 @@ export default function ProductDetailsPage() {
   const isLowStock = product.stock > 0 && product.stock <= 5;
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8">
-      {/* Breadcrumbs & Back Navigation */}
-      <div className="flex items-center justify-between text-xs text-slate-500">
-        <nav className="flex items-center gap-2 overflow-x-auto whitespace-nowrap py-1">
-          <Link to="/" className="hover:text-indigo-600 transition-colors">
+    <div className="max-w-6xl mx-auto space-y-4">
+      {/* Breadcrumbs */}
+      <div className="flex items-center justify-between text-xs text-slate-500 pb-2 border-b border-slate-200">
+        <nav className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap">
+          <Link to="/" className="hover:text-amber-700 transition-colors">
             Home
           </Link>
-          <span>/</span>
-          <Link to="/products" className="hover:text-indigo-600 transition-colors">
+          <span>›</span>
+          <Link to="/products" className="hover:text-amber-700 transition-colors">
             Catalogue
           </Link>
-          <span>/</span>
-          <span className="text-slate-400">{product.category}</span>
-          <span>/</span>
-          <span className="font-medium text-slate-800 truncate max-w-[200px]">{product.name}</span>
+          <span>›</span>
+          <Link
+            to={`/products?category=${encodeURIComponent(product.category)}`}
+            className="hover:text-amber-700 transition-colors"
+          >
+            {product.category}
+          </Link>
+          <span>›</span>
+          <span className="text-slate-800 font-medium truncate max-w-[240px]">{product.name}</span>
         </nav>
 
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-1 text-slate-600 hover:text-indigo-600 font-medium transition-colors"
+          className="inline-flex items-center gap-1 text-slate-600 hover:text-slate-900 font-medium"
         >
           <ArrowLeft className="w-3.5 h-3.5" /> Back
         </button>
       </div>
 
-      {/* Product Main Container */}
-      <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-14">
-          {/* Left Column: Product Image */}
-          <div className="space-y-4">
-            <div className="relative aspect-square w-full rounded-2xl bg-slate-100 overflow-hidden border border-slate-200/60 shadow-inner">
-              <img
-                src={product.imageUrl}
-                alt={product.name}
-                className="w-full h-full object-cover object-center"
-              />
+      {/* Main Grid: Image, Details, Buy Box */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 items-start pt-2">
+        {/* Left Column: Product Image (5 cols on lg) */}
+        <div className="lg:col-span-5 bg-white rounded-lg border border-slate-200 p-6 flex items-center justify-center shadow-sm">
+          <div className="aspect-square w-full max-w-md flex items-center justify-center overflow-hidden">
+            <img
+              src={product.imageUrl}
+              alt={product.name}
+              className="max-h-full max-w-full object-contain"
+            />
+          </div>
+        </div>
 
-              {/* Status Badges */}
-              <div className="absolute top-4 left-4 flex flex-col gap-2">
-                <span className="px-3 py-1 text-xs font-semibold bg-white/95 text-slate-800 rounded-full shadow-sm backdrop-blur-sm border border-slate-200/60">
-                  {product.category}
-                </span>
-                {isOutOfStock ? (
-                  <span className="px-3 py-1 text-xs font-semibold bg-rose-500 text-white rounded-full shadow-sm">
-                    Out of Stock
-                  </span>
-                ) : isLowStock ? (
-                  <span className="px-3 py-1 text-xs font-semibold bg-amber-500 text-white rounded-full shadow-sm animate-pulse">
-                    Only {product.stock} left in stock
-                  </span>
-                ) : (
-                  <span className="px-3 py-1 text-xs font-semibold bg-emerald-600 text-white rounded-full shadow-sm">
-                    In Stock
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Quality & Return Highlights */}
-            <div className="grid grid-cols-3 gap-3 pt-2 text-center text-[11px] text-slate-500">
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex flex-col items-center gap-1">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                <span className="font-semibold text-slate-700">100% Authentic</span>
-                <span>Verified Quality</span>
-              </div>
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex flex-col items-center gap-1">
-                <Truck className="w-4 h-4 text-indigo-600" />
-                <span className="font-semibold text-slate-700">Express Delivery</span>
-                <span>Fast Dispatch</span>
-              </div>
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex flex-col items-center gap-1">
-                <RotateCcw className="w-4 h-4 text-amber-600" />
-                <span className="font-semibold text-slate-700">7 Days Return</span>
-                <span>Hassle-Free</span>
-              </div>
-            </div>
+        {/* Middle Column: Details & Description (4 cols on lg) */}
+        <div className="lg:col-span-4 space-y-4">
+          <div>
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">
+              {product.category}
+            </span>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 leading-snug">
+              {product.name}
+            </h1>
           </div>
 
-          {/* Right Column: Product Info & Purchase Actions */}
-          <div className="flex flex-col justify-between space-y-6">
-            <div className="space-y-4">
-              {/* Rating */}
-              <div className="flex items-center gap-2">
-                <div className="flex items-center text-amber-500">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`w-4 h-4 ${
-                        i < Math.floor(product.rating || 4.5)
-                          ? 'fill-amber-400 text-amber-400'
-                          : 'text-slate-300'
-                      }`}
-                    />
-                  ))}
-                  <span className="ml-1.5 font-bold text-slate-800 text-sm">
-                    {product.rating?.toFixed(1) || '4.5'}
-                  </span>
-                </div>
-                <span className="text-slate-300">•</span>
-                <span className="text-xs text-slate-500 font-medium">
-                  {product.numReviews || 0} Customer Reviews
+          {/* Rating */}
+          {typeof product.rating === 'number' && product.rating > 0 && (
+            <div className="flex items-center gap-2 pb-3 border-b border-slate-200 text-xs">
+              <div className="flex items-center text-amber-500">
+                <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                <span className="ml-1 font-bold text-slate-800 text-sm">
+                  {product.rating.toFixed(1)}
                 </span>
               </div>
-
-              {/* Product Title */}
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight leading-snug">
-                {product.name}
-              </h1>
-
-              {/* Price Row */}
-              <div className="p-4 rounded-2xl bg-indigo-50/70 border border-indigo-100/80 flex items-baseline justify-between">
-                <div>
-                  <span className="text-xs text-indigo-700 font-semibold uppercase tracking-wider block">
-                    Special Offer Price
-                  </span>
-                  <div className="flex items-baseline gap-2 mt-0.5">
-                    <span className="text-3xl font-black text-indigo-950">
-                      {formatCurrency(product.pricePaise)}
-                    </span>
-                    <span className="text-xs text-indigo-600 font-medium">
-                      (Inclusive of all taxes)
-                    </span>
-                  </div>
-                </div>
-                <span className="text-[11px] font-mono text-indigo-500 bg-white px-2.5 py-1 rounded-lg border border-indigo-200">
-                  {product.pricePaise} paise
-                </span>
-              </div>
-
-              {/* Description */}
-              <div className="space-y-2">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                  About this item
-                </h3>
-                <p className="text-sm text-slate-600 leading-relaxed">
-                  {product.description}
-                </p>
-              </div>
-
-              {/* Stock Indicator */}
-              <div className="pt-2 text-xs">
-                {isOutOfStock ? (
-                  <p className="text-rose-600 font-semibold flex items-center gap-1.5">
-                    <AlertCircle className="w-4 h-4" /> This item is currently out of stock.
-                  </p>
-                ) : (
-                  <p className="text-emerald-700 font-semibold flex items-center gap-1.5">
-                    <Check className="w-4 h-4 text-emerald-600" />
-                    In stock and ready to ship ({product.stock} units available)
-                  </p>
-                )}
-              </div>
+              <span className="text-slate-300">|</span>
+              <span className="text-amber-700 font-medium">
+                {product.numReviews || 0} ratings
+              </span>
             </div>
+          )}
 
-            {/* Quantity Selector & Add to Cart */}
-            <div className="space-y-4 pt-6 border-t border-slate-100">
-              <div className="flex items-center gap-4">
-                {/* Quantity Control */}
-                <div className="flex items-center border border-slate-200 rounded-xl bg-slate-50 p-1">
-                  <button
-                    type="button"
-                    onClick={() => handleQuantityChange(-1)}
-                    disabled={quantity <= 1 || isOutOfStock}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-600 hover:bg-white hover:text-indigo-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    title="Decrease quantity"
-                  >
-                    <Minus className="w-3.5 h-3.5" />
-                  </button>
-                  <span className="w-10 text-center font-bold text-sm text-slate-800">
-                    {quantity}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => handleQuantityChange(1)}
-                    disabled={quantity >= product.stock || isOutOfStock}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-600 hover:bg-white hover:text-indigo-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    title="Increase quantity"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+          {/* Price */}
+          <div className="space-y-1">
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-extrabold text-slate-900">
+                {formatCurrency(product.pricePaise)}
+              </span>
+            </div>
+            <p className="text-xs text-slate-500">
+              Inclusive of all taxes. Free delivery on all orders during testing.
+            </p>
+          </div>
 
-                {/* Add to Cart Button */}
-                <button
-                  type="button"
-                  onClick={handleAddToCart}
-                  disabled={isOutOfStock}
-                  className={`flex-1 py-3 px-6 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-md ${
-                    isOutOfStock
-                      ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
-                      : addedToast
-                      ? 'bg-emerald-600 text-white shadow-emerald-200'
-                      : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200 hover:shadow-lg'
-                  }`}
-                >
-                  {addedToast ? (
-                    <>
-                      <Check className="w-4 h-4 animate-bounce" />
-                      <span>Added to Cart!</span>
-                    </>
-                  ) : (
-                    <>
-                      <ShoppingCart className="w-4 h-4" />
-                      <span>Add to Cart ({formatCurrency(product.pricePaise * quantity)})</span>
-                    </>
-                  )}
-                </button>
-              </div>
+          {/* Description / About */}
+          <div className="pt-3 border-t border-slate-200 space-y-2">
+            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+              About this item
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
+              {product.description}
+            </p>
+          </div>
 
-              {/* Razorpay Test Mode Assurance */}
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center gap-2.5 text-xs text-slate-500">
-                <CreditCard className="w-4 h-4 text-violet-600 shrink-0" />
-                <span>
-                  Payments verified in <strong>Razorpay Test Mode</strong> with HMAC-SHA256 signature verification.
-                </span>
-              </div>
+          {/* Key Value Highlights */}
+          <div className="grid grid-cols-3 gap-2 pt-2 text-center text-[11px] text-slate-600">
+            <div className="p-2 rounded-md bg-slate-50 border border-slate-200 flex flex-col items-center gap-1">
+              <Truck className="w-4 h-4 text-slate-700" />
+              <span className="font-semibold text-slate-800">Fast Dispatch</span>
+            </div>
+            <div className="p-2 rounded-md bg-slate-50 border border-slate-200 flex flex-col items-center gap-1">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <span className="font-semibold text-slate-800">100% Genuine</span>
+            </div>
+            <div className="p-2 rounded-md bg-slate-50 border border-slate-200 flex flex-col items-center gap-1">
+              <RotateCcw className="w-4 h-4 text-slate-700" />
+              <span className="font-semibold text-slate-800">7 Days Return</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: Amazon-style Buy Box (3 cols on lg) */}
+        <div className="lg:col-span-3 bg-white rounded-lg border border-slate-200 p-5 space-y-4 shadow-sm">
+          {/* Price Header */}
+          <div className="space-y-1">
+            <span className="text-2xl font-black text-slate-900 block">
+              {formatCurrency(product.pricePaise)}
+            </span>
+            <p className="text-[11px] text-slate-500">
+              <span className="text-emerald-700 font-semibold">FREE Delivery</span> (Test Mode active)
+            </p>
+          </div>
+
+          {/* Availability */}
+          <div className="text-sm">
+            {isOutOfStock ? (
+              <span className="font-bold text-rose-600">Currently unavailable.</span>
+            ) : isLowStock ? (
+              <span className="font-bold text-amber-700">
+                Only {product.stock} left in stock - order soon.
+              </span>
+            ) : (
+              <span className="font-bold text-emerald-700">In stock.</span>
+            )}
+          </div>
+
+          {/* Quantity Selector */}
+          {!isOutOfStock && (
+            <div className="flex items-center gap-2 text-xs">
+              <label htmlFor="qty-select" className="font-medium text-slate-700">
+                Quantity:
+              </label>
+              <select
+                id="qty-select"
+                value={quantity}
+                onChange={(e) => setQuantity(Number(e.target.value))}
+                className="bg-slate-50 border border-slate-300 text-xs font-semibold rounded-md px-2.5 py-1 focus:outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer"
+              >
+                {Array.from({ length: Math.min(product.stock, 10) }, (_, i) => i + 1).map(
+                  (n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
+                  )
+                )}
+              </select>
+            </div>
+          )}
+
+          {/* Action Buttons: Add to Cart & Buy Now */}
+          <div className="space-y-2 pt-2">
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              disabled={isOutOfStock}
+              className={`w-full py-2.5 px-4 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm ${
+                isOutOfStock
+                  ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
+                  : addedToast
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-amber-400 hover:bg-amber-500 text-slate-950 border border-amber-500/80 active:scale-[0.99]'
+              }`}
+            >
+              {addedToast ? (
+                <>
+                  <Check className="w-4 h-4 text-white" />
+                  <span>Added to Cart</span>
+                </>
+              ) : (
+                <>
+                  <ShoppingCart className="w-4 h-4 text-slate-950" />
+                  <span>Add to Cart</span>
+                </>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleBuyNow}
+              disabled={isOutOfStock}
+              className="w-full py-2.5 px-4 rounded-full text-xs font-bold bg-amber-500 hover:bg-amber-600 text-slate-950 border border-amber-600 shadow-sm active:scale-[0.99] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+            >
+              <Zap className="w-4 h-4 text-slate-950" />
+              <span>Buy Now</span>
+            </button>
+          </div>
+
+          {/* Secure Transaction Guarantee */}
+          <div className="pt-2 border-t border-slate-100 space-y-1.5 text-[11px] text-slate-500">
+            <div className="flex items-center gap-2">
+              <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span>Secure transaction</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>Dispatched from</span>
+              <span className="font-medium text-slate-700">ShopSphere</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>Sold by</span>
+              <span className="font-medium text-slate-700">ShopSphere Retail</span>
             </div>
           </div>
         </div>

@@ -4,10 +4,14 @@ import Product from '../models/Product.js';
 
 /**
  * Helper to calculate shipping fee in paise
- * Free shipping for orders >= ₹999 (99900 paise), otherwise ₹99 (9900 paise)
+ * By default in test mode with ₹1 products, free delivery applies (0 additional charges)
+ * so 1 item at ₹1 creates a Razorpay order for exactly 100 paise.
  */
 const calculateShippingPaise = (subtotalPaise) => {
-  return subtotalPaise >= 99900 ? 0 : 9900;
+  if (process.env.ENFORCE_SHIPPING_FEE === 'true') {
+    return subtotalPaise >= 99900 ? 0 : 9900;
+  }
+  return 0;
 };
 
 /**

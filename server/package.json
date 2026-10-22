@@ -9,7 +9,11 @@
     "dev": "nodemon src/server.js",
     "seed": "node scripts/seed.js",
     "test": "node tests/fullSuite.test.js",
-    "test:payment": "node tests/payment.test.js"
+    "test:payment": "node tests/payment.test.js",
+    "test:price": "node tests/oneRupeePricing.test.js",
+    "test:security": "node tests/securityRemediation.test.js",
+    "migrate:prices": "node scripts/updateProductPrices.js",
+    "cancel:test-order": "node scripts/cancelTestOrder.js"
   },
   "keywords": [
     "ecommerce",

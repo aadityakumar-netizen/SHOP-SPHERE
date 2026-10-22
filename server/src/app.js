@@ -13,26 +13,41 @@ const app = express();
 // Security HTTP headers
 app.use(helmet());
 
-// CORS configuration: allow frontend URL and local dev origins
-const allowedOrigins = [
-  env.CLIENT_URL,
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-  'http://localhost:3000',
-];
+// CORS configuration: strictly permit configured frontend URL and local dev origins
+const configuredClientUrls = (env.CLIENT_URL || '')
+  .split(',')
+  .map((url) => url.trim().replace(/\/+$/, ''))
+  .filter(Boolean);
+
+const allowedOrigins = Array.from(
+  new Set([
+    ...configuredClientUrls,
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://localhost:3000',
+  ])
+);
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (e.g. mobile apps, curl, postman)
-      if (!origin || allowedOrigins.includes(origin)) {
+      // Allow requests with no origin (e.g. server-to-server, curl, Postman)
+      if (!origin) {
         return callback(null, true);
       }
-      return callback(null, true); // Permissive in development
+
+      const normalizedOrigin = origin.trim().replace(/\/+$/, '');
+      if (allowedOrigins.includes(normalizedOrigin)) {
+        return callback(null, true);
+      }
+
+      // Strictly disallow untrusted origins without reflecting them or exposing credentials
+      return callback(null, false);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Razorpay-Signature'],
+    optionsSuccessStatus: 204,
   })
 );
 

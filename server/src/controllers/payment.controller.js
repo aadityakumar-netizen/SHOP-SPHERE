@@ -26,12 +26,14 @@ export const createRazorpayOrder = async (req, res, next) => {
     }
 
     const order = await Order.findById(orderId);
+
     if (!order) {
       return res.status(404).json({
         success: false,
         message: 'Order not found.',
       });
     }
+
 
     // Check ownership
     const isOwner = order.user.toString() === req.user._id.toString();
@@ -57,25 +59,44 @@ export const createRazorpayOrder = async (req, res, next) => {
       });
     }
 
+    // Guard: Prevent accidental switch to Live Mode
+    if (env.RAZORPAY_KEY_ID && env.RAZORPAY_KEY_ID.startsWith('rzp_live_')) {
+      console.error('[SECURITY ERROR] Live Mode Key detected! Rejecting payment initiation.');
+      return res.status(400).json({
+        success: false,
+        message: 'Live Mode keys are strictly disabled. ShopSphere must operate in Razorpay Test Mode.',
+      });
+    }
+
     let razorpayOrderId;
     const hasLiveKeys = isRazorpayConfigured();
 
     if (hasLiveKeys) {
-      // Use official Razorpay SDK instance
-      const razorpay = getRazorpayInstance();
-      const rzpOrder = await razorpay.orders.create({
-        amount: order.totalAmountPaise, // Integer paise
-        currency: 'INR',
-        receipt: `receipt_${order._id.toString().slice(-8)}`,
-        notes: {
-          mongoOrderId: order._id.toString(),
-          userEmail: req.user.email,
-        },
-      });
-      razorpayOrderId = rzpOrder.id;
+      try {
+        // Use official Razorpay SDK instance
+        const razorpay = getRazorpayInstance();
+        const rzpOrder = await razorpay.orders.create({
+          amount: order.totalAmountPaise, // Integer paise
+          currency: 'INR',
+          receipt: `receipt_${order._id.toString().slice(-8)}`,
+          notes: {
+            mongoOrderId: order._id.toString(),
+            userEmail: req.user.email,
+          },
+        });
+        razorpayOrderId = rzpOrder.id;
+        console.log(`[RAZORPAY SUCCESS] Real Test Order created on Razorpay API: ${razorpayOrderId} (${order.totalAmountPaise} paise)`);
+      } catch (sdkError) {
+        console.error('[RAZORPAY SDK ERROR] Failed to create order via Razorpay API:', sdkError.message);
+        return res.status(502).json({
+          success: false,
+          message: `Razorpay API rejected order creation: ${sdkError.message}`,
+        });
+      }
     } else {
-      // Fallback deterministic test order identifier for offline development testing
+      // Deterministic test order identifier for local simulation when using placeholder credentials
       razorpayOrderId = `order_test_${order._id.toString().slice(-14)}`;
+      console.log(`[RAZORPAY TEST] Using local Test Mode order identifier: ${razorpayOrderId} (${order.totalAmountPaise} paise)`);
     }
 
     // Save razorpayOrderId on MongoDB order
@@ -84,7 +105,7 @@ export const createRazorpayOrder = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      keyId: env.RAZORPAY_KEY_ID,
+      keyId: env.RAZORPAY_KEY_ID ? env.RAZORPAY_KEY_ID.trim() : '',
       razorpayOrderId,
       amount: order.totalAmountPaise,
       currency: 'INR',
@@ -114,6 +135,7 @@ export const verifyPayment = async (req, res, next) => {
     if (!orderId || !razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
       return res.status(400).json({
         success: false,
+        verificationStatus: 'failed',
         message:
           'Missing payment verification parameters: orderId, razorpayOrderId, razorpayPaymentId, and razorpaySignature are required.',
       });
@@ -122,6 +144,7 @@ export const verifyPayment = async (req, res, next) => {
     if (!mongoose.Types.ObjectId.isValid(orderId)) {
       return res.status(400).json({
         success: false,
+        verificationStatus: 'failed',
         message: 'Invalid orderId format.',
       });
     }
@@ -130,6 +153,7 @@ export const verifyPayment = async (req, res, next) => {
     if (!order) {
       return res.status(404).json({
         success: false,
+        verificationStatus: 'failed',
         message: 'Order not found.',
       });
     }
@@ -140,6 +164,7 @@ export const verifyPayment = async (req, res, next) => {
     if (!isOwner && !isAdmin) {
       return res.status(403).json({
         success: false,
+        verificationStatus: 'failed',
         message: 'Access denied. You do not own this order.',
       });
     }
@@ -148,12 +173,25 @@ export const verifyPayment = async (req, res, next) => {
     if (order.paymentStatus === 'paid') {
       return res.status(200).json({
         success: true,
+        verificationStatus: 'already_paid',
         message: 'Order is already marked as paid (idempotent request).',
         order,
       });
     }
 
-    // Cryptographic HMAC-SHA256 Signature Verification with timing-safe comparison
+    // 1. Order ID Matching Check (Must match the recorded Razorpay order ID)
+    if (order.razorpayOrderId && order.razorpayOrderId !== razorpayOrderId) {
+      console.warn(
+        `[SECURITY WARNING] Order ID mismatch. Expected: ${order.razorpayOrderId}, Received: ${razorpayOrderId}`
+      );
+      return res.status(400).json({
+        success: false,
+        verificationStatus: 'order_mismatch',
+        message: 'Order ID mismatch between local record and Razorpay response.',
+      });
+    }
+
+    // 2. Cryptographic HMAC-SHA256 Signature Verification with timing-safe comparison
     const isSignatureValid = verifyPaymentSignature({
       razorpayOrderId,
       razorpayPaymentId,
@@ -163,23 +201,45 @@ export const verifyPayment = async (req, res, next) => {
 
     if (!isSignatureValid) {
       console.warn(
-        `[SECURITY ALERT] Invalid payment signature attempt for order ${orderId}`
+        `[SECURITY ALERT] Invalid payment signature for order ${orderId} (Razorpay Order: ${razorpayOrderId})`
       );
       return res.status(400).json({
         success: false,
-        message: 'Invalid payment signature. Payment verification failed.',
+        verificationStatus: 'signature_invalid',
+        message: 'Invalid payment signature. Payment verification failed on server.',
       });
     }
 
-    // Ensure the order matches the Razorpay Order ID
-    if (order.razorpayOrderId && order.razorpayOrderId !== razorpayOrderId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Order ID mismatch between local record and Razorpay response.',
-      });
+    // 3. Amount and Currency Verification (If live SDK configured)
+    if (isRazorpayConfigured()) {
+      try {
+        const razorpay = getRazorpayInstance();
+        const paymentDetails = await razorpay.payments.fetch(razorpayPaymentId);
+
+        if (paymentDetails.amount !== order.totalAmountPaise) {
+          console.warn(
+            `[SECURITY ALERT] Amount mismatch for order ${orderId}: Expected ${order.totalAmountPaise} paise, Gateway reported ${paymentDetails.amount} paise.`
+          );
+          return res.status(400).json({
+            success: false,
+            verificationStatus: 'amount_mismatch',
+            message: `Amount mismatch: Gateway reported ₹${(paymentDetails.amount / 100).toFixed(2)}, expected ₹${(order.totalAmountPaise / 100).toFixed(2)}.`,
+          });
+        }
+
+        if (paymentDetails.currency !== 'INR') {
+          return res.status(400).json({
+            success: false,
+            verificationStatus: 'currency_mismatch',
+            message: `Currency mismatch: Expected INR, received ${paymentDetails.currency}.`,
+          });
+        }
+      } catch (fetchErr) {
+        console.warn(`[RAZORPAY API WARN] Could not fetch payment record from Razorpay API: ${fetchErr.message}`);
+      }
     }
 
-    // Update order status to paid (keeping paymentStatus separate from orderStatus)
+    // 4. Update order status to paid (Atomic and explicit)
     order.paymentStatus = 'paid';
     order.orderStatus = 'processing'; // Valid next state after payment confirmation
     order.razorpayPaymentId = razorpayPaymentId;
@@ -187,10 +247,110 @@ export const verifyPayment = async (req, res, next) => {
     order.paidAt = new Date();
     await order.save();
 
+    console.log(`[PAYMENT VERIFIED SUCCESS] Order #${order._id} verified and marked as PAID (Payment ID: ${razorpayPaymentId})`);
+
     res.status(200).json({
       success: true,
+      verificationStatus: 'verified',
       message: 'Payment verified successfully. Order is now paid.',
       order,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route   POST /api/v1/payments/log-failure
+ * @desc    Record client-side Razorpay payment failure in safe server diagnostics
+ * @access  Private (Customer/Admin)
+ */
+export const logPaymentFailure = async (req, res, next) => {
+  try {
+    const {
+      orderId,
+      razorpayOrderId,
+      errorCode,
+      errorDescription,
+      errorSource,
+      errorStep,
+      errorReason,
+      razorpayPaymentId,
+    } = req.body;
+
+    if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'A valid orderId is required for logging payment failure.',
+      });
+    }
+
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found.',
+      });
+    }
+    // Security: only the order owner or an administrator may log its failure.
+    const isOrderOwner = String(order.user) === String(req.user._id);
+    const isAdmin = req.user.role === 'admin';
+
+    if (!isOrderOwner && !isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: 'You are not authorized to log failure for this order.',
+      });
+    }
+
+
+    // Security: Sanitize all inputs to strip out any potential card numbers, CVVs, OTPs, or secrets
+    const sanitize = (val) => {
+      if (typeof val !== 'string') return '';
+      return val
+        .replace(/\b\d{4}[ -]?\d{4}[ -]?\d{4}[ -]?\d{4}\b/g, '[REDACTED_CARD]')
+        .replace(/\b\d{3,4}\b/g, '[REDACTED_CODE]')
+        .slice(0, 500);
+    };
+
+    const sanitizedCode = sanitize(errorCode) || 'PAYMENT_FAILED';
+    const sanitizedDesc = sanitize(errorDescription) || 'Payment was declined or failed in the checkout gateway.';
+    const sanitizedSource = sanitize(errorSource) || 'gateway';
+    const sanitizedStep = sanitize(errorStep) || 'payment_execution';
+    const sanitizedReason = sanitize(errorReason) || 'transaction_declined';
+
+    // Safe server-side diagnostic log (No secrets, no card numbers, no CVVs)
+    console.warn('===============================================================');
+    console.warn('  [RAZORPAY PAYMENT FAILURE DIAGNOSTIC LOG]');
+    console.warn(`  Timestamp       : ${new Date().toISOString()}`);
+    console.warn(`  Order ID (Mongo): ${order._id}`);
+    console.warn(`  Order Amount    : ${order.totalAmountPaise} paise (₹${(order.totalAmountPaise / 100).toFixed(2)})`);
+    console.warn(`  User ID         : ${req.user._id} (${req.user.email})`);
+    console.warn(`  Razorpay Order  : ${razorpayOrderId || order.razorpayOrderId || 'N/A'}`);
+    console.warn(`  Razorpay Payment: ${razorpayPaymentId || 'N/A'}`);
+    console.warn(`  Error Code      : ${sanitizedCode}`);
+    console.warn(`  Error Reason    : ${sanitizedReason}`);
+    console.warn(`  Error Source    : ${sanitizedSource}`);
+    console.warn(`  Error Step      : ${sanitizedStep}`);
+    console.warn(`  Description     : ${sanitizedDesc}`);
+    console.warn('===============================================================');
+
+    // Generate sanitized, user-friendly error message based on code and reason
+    let userMessage = 'Your payment could not be processed. Please check your card or UPI details and try again.';
+    if (sanitizedCode === 'BAD_REQUEST_ERROR') {
+      userMessage = `Payment request rejected by gateway: ${sanitizedDesc}`;
+    } else if (sanitizedCode === 'GATEWAY_ERROR') {
+      userMessage = 'Payment processing failed at the bank/gateway. Please retry with another payment method.';
+    } else if (sanitizedReason === 'payment_cancelled') {
+      userMessage = 'Payment was cancelled. You can retry payment whenever you are ready.';
+    }
+
+    res.status(200).json({
+      success: true,
+      diagnosticLogged: true,
+      sanitizedMessage: userMessage,
+      code: sanitizedCode,
     });
   } catch (error) {
     next(error);
@@ -249,61 +409,41 @@ export const handleWebhook = async (req, res, next) => {
     // Handle payment.captured or order.paid
     if (eventType === 'payment.captured' || eventType === 'order.paid') {
       const paymentEntity = event.payload?.payment?.entity;
-      const rzpOrderId = paymentEntity?.order_id || event.payload?.order?.entity?.id;
-      const rzpPaymentId = paymentEntity?.id;
+      const orderEntity = event.payload?.order?.entity;
 
-      if (rzpOrderId) {
-        targetOrder = await Order.findOne({ razorpayOrderId: rzpOrderId });
+      const razorpayOrderId = paymentEntity?.order_id || orderEntity?.id;
+      const razorpayPaymentId = paymentEntity?.id;
+
+      if (razorpayOrderId) {
+        targetOrder = await Order.findOne({ razorpayOrderId });
+
         if (targetOrder && targetOrder.paymentStatus !== 'paid') {
           targetOrder.paymentStatus = 'paid';
           targetOrder.orderStatus = 'processing';
-          targetOrder.razorpayPaymentId = rzpPaymentId || targetOrder.razorpayPaymentId;
+          targetOrder.razorpayPaymentId = razorpayPaymentId || targetOrder.razorpayPaymentId;
           targetOrder.paidAt = new Date();
           await targetOrder.save();
-          processingNotes = `Order ${targetOrder._id} marked as paid via webhook`;
+          console.log(`[WEBHOOK SUCCESS] Order #${targetOrder._id} marked as PAID via webhook event: ${eventType}`);
         }
       }
     }
 
-    // Handle payment.failed
-    if (eventType === 'payment.failed') {
-      const rzpOrderId = event.payload?.payment?.entity?.order_id;
-      if (rzpOrderId) {
-        targetOrder = await Order.findOne({ razorpayOrderId: rzpOrderId });
-        if (targetOrder && targetOrder.paymentStatus === 'pending') {
-          targetOrder.paymentStatus = 'failed';
-          await targetOrder.save();
-          processingNotes = `Order ${targetOrder._id} marked as payment failed via webhook`;
-        }
-      }
-    }
-
-    // Record webhook event in database for audit trail and deduplication
+    // Save record to WebhookEvent collection for audit trail and deduplication
     await WebhookEvent.create({
       eventId,
       eventType,
-      order: targetOrder?._id,
-      razorpayOrderId: targetOrder?.razorpayOrderId,
-      razorpayPaymentId: targetOrder?.razorpayPaymentId,
-      status: 'processed',
-      processingNotes,
-      payload: {
-        event: event.event,
-        createdAt: event.created_at,
-      },
+      entityId: event.payload?.payment?.entity?.id || event.payload?.order?.entity?.id || 'unknown',
+      order: targetOrder?._id || null,
+      processed: true,
+      notes: processingNotes,
     });
 
     res.status(200).json({
       success: true,
       received: true,
+      message: 'Webhook processed successfully.',
     });
   } catch (error) {
     next(error);
   }
-};
-
-export default {
-  createRazorpayOrder,
-  verifyPayment,
-  handleWebhook,
 };

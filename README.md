@@ -1,4 +1,4 @@
-# ShopSphere — Production-Ready MERN E-Commerce with Razorpay
+﻿# ShopSphere — MERN Stack E-Commerce Platform
 
 [![React](https://img.shields.io/badge/React-18.3-blue.svg)](https://reactjs.org/)
 [![Vite](https://img.shields.io/badge/Vite-6.2-purple.svg)](https://vitejs.dev/)
@@ -18,38 +18,38 @@ It was designed from scratch to solve real-world engineering and financial accur
 ## Architecture & Engineering Highlights
 
 ```
-┌────────────────────────────────────────────────────────────────────────┐
-│                        SHOPSPHERE ARCHITECTURE                         │
-└────────────────────────────────────────────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                        SHOPSPHERE ARCHITECTURE                         â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 
   [ React 18 + Vite + Tailwind Client ] (Port 5173)
-         │
-         │  1. Axios with JWT Bearer Interceptor
-         ▼
+         â”‚
+         â”‚  1. Axios with JWT Bearer Interceptor
+         â–¼
   [ Express.js REST API v1 ] (Port 5000)
-         │  ├── Helmet (Security Headers)
-         │  ├── CORS (Configured Origins)
-         │  ├── Express Rate Limit (Auth: 30/15m, Payments: 60/15m)
-         │  ├── express.json with rawBody verification capture
-         │
-         ├──► [ MongoDB Atlas / Local MongoDB ]
-         │       ├── User (Bcrypt passwordHash, RBAC: customer | admin)
-         │       ├── Product (Integer pricePaise, auto-slug, text index)
-         │       ├── Order (Integer subtotal/shipping/total, items snapshot)
-         │       └── WebhookEvent (Deduplication eventId, audit trail)
-         │
-         ├──► [ Official Razorpay Node.js SDK (Test Mode) ]
-         │       ├── Orders API (orders.create in integer paise)
-         │       └── HMAC-SHA256 Timing-Safe Signature Verification
-         │
-         └──► [ Razorpay Webhook Ingestion ]
-                 └── Verified against rawBody Buffer + Idempotent deduplication
+         â”‚  â”œâ”€â”€ Helmet (Security Headers)
+         â”‚  â”œâ”€â”€ CORS (Configured Origins)
+         â”‚  â”œâ”€â”€ Express Rate Limit (Auth: 30/15m, Payments: 60/15m)
+         â”‚  â”œâ”€â”€ express.json with rawBody verification capture
+         â”‚
+         â”œâ”€â”€â–º [ MongoDB Atlas / Local MongoDB ]
+         â”‚       â”œâ”€â”€ User (Bcrypt passwordHash, RBAC: customer | admin)
+         â”‚       â”œâ”€â”€ Product (Integer pricePaise, auto-slug, text index)
+         â”‚       â”œâ”€â”€ Order (Integer subtotal/shipping/total, items snapshot)
+         â”‚       â””â”€â”€ WebhookEvent (Deduplication eventId, audit trail)
+         â”‚
+         â”œâ”€â”€â–º [ Official Razorpay Node.js SDK (Test Mode) ]
+         â”‚       â”œâ”€â”€ Orders API (orders.create in integer paise)
+         â”‚       â””â”€â”€ HMAC-SHA256 Timing-Safe Signature Verification
+         â”‚
+         â””â”€â”€â–º [ Razorpay Webhook Ingestion ]
+                 â””â”€â”€ Verified against rawBody Buffer + Idempotent deduplication
 ```
 
 ### 1. Financial Accuracy: Integer Paise Math
 JavaScript's `Number` is an IEEE 754 double-precision float (e.g., `0.1 + 0.2 === 0.30000000000000004`). In e-commerce payments, fractional paise or floating-point rounding discrepancies can cause payment gateways to reject orders or create accounting reconciliation errors.
 - **Rule**: All prices, subtotals, shipping fees, and totals are computed and stored as **whole integer paise** (`1 INR = 100 paise`).
-- Example: `₹1,499.00` is strictly stored as `149900` paise.
+- Example: `â‚¹1,499.00` is strictly stored as `149900` paise.
 - Currency display helpers (`formatCurrency`) divide by 100 only at the UI boundary.
 
 ### 2. Server-Authoritative Pricing
@@ -91,48 +91,48 @@ Order payment status (`pending`, `paid`, `failed`) is decoupled from order fulfi
 
 ```text
 SHOP SPHERE/
-├── client/                     # React 18, Vite, Tailwind CSS Frontend
-│   ├── public/
-│   │   └── vite.svg
-│   ├── src/
-│   │   ├── components/         # Reusable UI elements (Navbar, Footer, HealthBadge, Cards, Modals)
-│   │   ├── context/            # Global state (AuthContext, CartContext)
-│   │   ├── layouts/            # Layout wrappers (RootLayout)
-│   │   ├── pages/              # Views (Home, Catalog, ProductDetails, Cart, Checkout, OrderHistory, Admin)
-│   │   ├── services/           # API services (api, authService, productService, orderService, adminService)
-│   │   ├── utils/              # Formatters (INR currency, dates)
-│   │   ├── App.jsx             # React Router hierarchy
-│   │   ├── index.css           # Tailwind CSS directives
-│   │   └── main.jsx            # React root mount
-│   ├── index.html              # Loads official Razorpay Checkout SDK
-│   ├── package.json
-│   ├── tailwind.config.js
-│   ├── vite.config.js          # Vite config with API proxy to port 5000
-│   ├── .env                    # Local environment variables
-│   └── .env.example
-├── server/                     # Node.js, Express.js Backend
-│   ├── scripts/
-│   │   └── seed.js             # Realistic sample products & demo accounts seed script
-│   ├── src/
-│   │   ├── config/             # DB (Atlas/Local), Env parsing, Razorpay SDK initialization
-│   │   ├── controllers/        # Controllers (auth, product, order, payment, admin)
-│   │   ├── middleware/         # Error handler, 404 handler, auth guards (requireAuth, requireAdmin)
-│   │   ├── models/             # Mongoose schemas (User, Product, Order, WebhookEvent)
-│   │   ├── routes/             # Versioned Express routes (/api/v1/...)
-│   │   ├── utils/              # JWT signing/verifying helpers
-│   │   ├── validators/         # Input validation schemas
-│   │   ├── app.js              # Express app with Helmet, CORS, Rate Limiters, rawBody capture
-│   │   └── server.js           # Server entry point & graceful shutdown
-│   ├── tests/
-│   │   ├── fullSuite.test.js   # 35-assertion comprehensive test suite
-│   │   └── payment.test.js     # Dedicated payment & webhook verification test suite
-│   ├── package.json
-│   ├── .env                    # Server environment variables
-│   └── .env.example
-├── ShopSphere_API_Collection.postman_collection.json # Ready-to-import Postman collection
-├── package.json                # Root orchestration scripts
-├── .gitignore                  # Git ignore rules
-└── README.md
+â”œâ”€â”€ client/                     # React 18, Vite, Tailwind CSS Frontend
+â”‚   â”œâ”€â”€ public/
+â”‚   â”‚   â””â”€â”€ vite.svg
+â”‚   â”œâ”€â”€ src/
+â”‚   â”‚   â”œâ”€â”€ components/         # Reusable UI elements (Navbar, Footer, HealthBadge, Cards, Modals)
+â”‚   â”‚   â”œâ”€â”€ context/            # Global state (AuthContext, CartContext)
+â”‚   â”‚   â”œâ”€â”€ layouts/            # Layout wrappers (RootLayout)
+â”‚   â”‚   â”œâ”€â”€ pages/              # Views (Home, Catalog, ProductDetails, Cart, Checkout, OrderHistory, Admin)
+â”‚   â”‚   â”œâ”€â”€ services/           # API services (api, authService, productService, orderService, adminService)
+â”‚   â”‚   â”œâ”€â”€ utils/              # Formatters (INR currency, dates)
+â”‚   â”‚   â”œâ”€â”€ App.jsx             # React Router hierarchy
+â”‚   â”‚   â”œâ”€â”€ index.css           # Tailwind CSS directives
+â”‚   â”‚   â””â”€â”€ main.jsx            # React root mount
+â”‚   â”œâ”€â”€ index.html              # Loads official Razorpay Checkout SDK
+â”‚   â”œâ”€â”€ package.json
+â”‚   â”œâ”€â”€ tailwind.config.js
+â”‚   â”œâ”€â”€ vite.config.js          # Vite config with API proxy to port 5000
+â”‚   â”œâ”€â”€ .env                    # Local environment variables
+â”‚   â””â”€â”€ .env.example
+â”œâ”€â”€ server/                     # Node.js, Express.js Backend
+â”‚   â”œâ”€â”€ scripts/
+â”‚   â”‚   â””â”€â”€ seed.js             # Realistic sample products & demo accounts seed script
+â”‚   â”œâ”€â”€ src/
+â”‚   â”‚   â”œâ”€â”€ config/             # DB (Atlas/Local), Env parsing, Razorpay SDK initialization
+â”‚   â”‚   â”œâ”€â”€ controllers/        # Controllers (auth, product, order, payment, admin)
+â”‚   â”‚   â”œâ”€â”€ middleware/         # Error handler, 404 handler, auth guards (requireAuth, requireAdmin)
+â”‚   â”‚   â”œâ”€â”€ models/             # Mongoose schemas (User, Product, Order, WebhookEvent)
+â”‚   â”‚   â”œâ”€â”€ routes/             # Versioned Express routes (/api/v1/...)
+â”‚   â”‚   â”œâ”€â”€ utils/              # JWT signing/verifying helpers
+â”‚   â”‚   â”œâ”€â”€ validators/         # Input validation schemas
+â”‚   â”‚   â”œâ”€â”€ app.js              # Express app with Helmet, CORS, Rate Limiters, rawBody capture
+â”‚   â”‚   â””â”€â”€ server.js           # Server entry point & graceful shutdown
+â”‚   â”œâ”€â”€ tests/
+â”‚   â”‚   â”œâ”€â”€ fullSuite.test.js   # 35-assertion comprehensive test suite
+â”‚   â”‚   â””â”€â”€ payment.test.js     # Dedicated payment & webhook verification test suite
+â”‚   â”œâ”€â”€ package.json
+â”‚   â”œâ”€â”€ .env                    # Server environment variables
+â”‚   â””â”€â”€ .env.example
+â”œâ”€â”€ ShopSphere_API_Collection.postman_collection.json # Ready-to-import Postman collection
+â”œâ”€â”€ package.json                # Root orchestration scripts
+â”œâ”€â”€ .gitignore                  # Git ignore rules
+â””â”€â”€ README.md
 ```
 
 ---
@@ -286,3 +286,4 @@ For a full enterprise production release beyond the placement portfolio scope:
 3. **Redis Caching**: Cache product catalogue listings and category queries in Redis with cache invalidation on product updates.
 4. **Email/SMS Notifications**: Integrate SendGrid or Nodemailer + Twilio to dispatch transactional order confirmation emails and SMS shipping tracking links.
 5. **CSRF & Refresh Token Rotation**: Implement HTTP-only cookies with rotating refresh tokens for enhanced session security.
+

@@ -124,9 +124,8 @@ export const CartProvider = ({ children }) => {
     0
   );
 
-  // Free shipping above ₹999 (99900 paise), else ₹99 (9900 paise)
-  const shippingPaise =
-    cartItems.length === 0 ? 0 : subtotalPaise >= 99900 ? 0 : 9900;
+  // Free delivery for testing mode (0 additional charges)
+  const shippingPaise = 0;
 
   const totalAmountPaise = subtotalPaise + shippingPaise;
 

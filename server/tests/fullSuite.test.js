@@ -123,7 +123,10 @@ async function runComprehensiveTests() {
 
   // --- 4. Cart & Server-Side Price Calculations ---
   console.log('\n[4. Cart Validation & Server-Side Pricing]');
-  const sampleProduct = prodsData.products[0];
+  const sampleProduct = prodsData.products.find(
+    (product) => Number.isInteger(product.stock) && product.stock >= 2
+  );
+  assert(sampleProduct, 'Test setup: Catalogue has a product with at least 2 units in stock');
   const initialStock = sampleProduct.stock;
 
   const cartValRes = await fetch(`${BASE_URL}/orders/validate-cart`, {

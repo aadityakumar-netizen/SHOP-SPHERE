@@ -16,18 +16,39 @@ export const isRazorpayConfigured = () => {
 
 // Initialize Razorpay SDK instance
 let razorpayInstance = null;
+let initializedKeyId = null;
+let initializedKeySecret = null;
+
+export const getRazorpayInstance = () => {
+  if (isRazorpayConfigured()) {
+    const currentKeyId = env.RAZORPAY_KEY_ID ? env.RAZORPAY_KEY_ID.trim() : '';
+    const currentKeySecret = env.RAZORPAY_KEY_SECRET ? env.RAZORPAY_KEY_SECRET.trim() : '';
+
+    if (
+      !razorpayInstance ||
+      initializedKeyId !== currentKeyId ||
+      initializedKeySecret !== currentKeySecret
+    ) {
+      razorpayInstance = new Razorpay({
+        key_id: currentKeyId,
+        key_secret: currentKeySecret,
+      });
+      initializedKeyId = currentKeyId;
+      initializedKeySecret = currentKeySecret;
+    }
+  } else {
+    razorpayInstance = null;
+  }
+  return razorpayInstance;
+};
+
 if (isRazorpayConfigured()) {
-  razorpayInstance = new Razorpay({
-    key_id: env.RAZORPAY_KEY_ID,
-    key_secret: env.RAZORPAY_KEY_SECRET,
-  });
+  getRazorpayInstance();
 } else {
   console.warn(
     '[RAZORPAY NOTICE] Placeholder credentials detected in server/.env. Enter valid rzp_test keys to create live Razorpay test orders.'
   );
 }
-
-export const getRazorpayInstance = () => razorpayInstance;
 
 /**
  * Verifies Razorpay Checkout signature using HMAC-SHA256 and timing-safe comparison

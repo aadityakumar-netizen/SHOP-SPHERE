@@ -22,6 +22,23 @@ export const paymentService = {
     const response = await api.post('/payments/verify', paymentData);
     return response.data;
   },
+
+  /**
+   * Report payment failure diagnostics safely to backend for server-side logging
+   * @param {Object} failureData
+   * @param {string} failureData.orderId
+   * @param {string} [failureData.razorpayOrderId]
+   * @param {string} [failureData.errorCode]
+   * @param {string} [failureData.errorDescription]
+   * @param {string} [failureData.errorSource]
+   * @param {string} [failureData.errorStep]
+   * @param {string} [failureData.errorReason]
+   * @param {string} [failureData.razorpayPaymentId]
+   */
+  async logPaymentFailure(failureData) {
+    const response = await api.post('/payments/log-failure', failureData);
+    return response.data;
+  },
 };
 
 export default paymentService;

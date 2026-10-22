@@ -10,7 +10,7 @@ const sampleProducts = [
     description:
       'Immerse yourself in rich, high-fidelity acoustics with active noise cancellation, 40-hour battery life, plush memory-foam ear cushions, and transparency mode for crystal clear calls.',
     category: 'Audio',
-    pricePaise: 799900, // ₹7,999.00
+    pricePaise: 100, // ₹1.00
     imageUrl:
       'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80',
     stock: 25,
@@ -22,7 +22,7 @@ const sampleProducts = [
     description:
       'Compact earbuds delivering deep punchy bass, IPX5 water resistance, wireless Qi charging, and dual beamforming microphones with environment noise cancellation.',
     category: 'Audio',
-    pricePaise: 249900, // ₹2,499.00
+    pricePaise: 100, // ₹1.00
     imageUrl:
       'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?auto=format&fit=crop&w=800&q=80',
     stock: 40,
@@ -34,7 +34,7 @@ const sampleProducts = [
     description:
       'Rugged IP67 dustproof and waterproof speaker with omnidirectional sound, rich subwoofers, customizable RGB rhythm lighting, and 24 hours of non-stop playback.',
     category: 'Audio',
-    pricePaise: 499900, // ₹4,999.00
+    pricePaise: 100, // ₹1.00
     imageUrl:
       'https://images.unsplash.com/photo-1545454675-3531b543be5d?auto=format&fit=crop&w=800&q=80',
     stock: 15,
@@ -48,7 +48,7 @@ const sampleProducts = [
     description:
       'Precision fitness companion equipped with a vibrant 1.43-inch AMOLED display, continuous SpO2 and heart-rate tracking, 110+ sports modes, Bluetooth calling, and 12-day battery life.',
     category: 'Wearables',
-    pricePaise: 399900, // ₹3,999.00
+    pricePaise: 100, // ₹1.00
     imageUrl:
       'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80',
     stock: 30,
@@ -60,7 +60,7 @@ const sampleProducts = [
     description:
       'Military-grade durability with dual-frequency GNSS positioning, barometric altimeter, offline topographic maps, and titanium bezel designed for the most demanding trails.',
     category: 'Wearables',
-    pricePaise: 649900, // ₹6,499.00
+    pricePaise: 100, // ₹1.00
     imageUrl:
       'https://images.unsplash.com/photo-1579586337278-3befd40fd17a?auto=format&fit=crop&w=800&q=80',
     stock: 18,
@@ -72,7 +72,7 @@ const sampleProducts = [
     description:
       'Ultralight medical-grade titanium ring monitoring heart rate variability (HRV), skin temperature, sleep stages, and readiness score with zero subscription fees.',
     category: 'Wearables',
-    pricePaise: 899900, // ₹8,999.00
+    pricePaise: 100, // ₹1.00
     imageUrl:
       'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=800&q=80',
     stock: 10,
@@ -86,7 +86,7 @@ const sampleProducts = [
     description:
       'Broadcast-quality 4K streaming webcam with Sony STARVIS sensor, intelligent auto-framing, dual noise-reducing stereo microphones, and physical privacy shutter.',
     category: 'Electronics',
-    pricePaise: 349900, // ₹3,499.00
+    pricePaise: 100, // ₹1.00
     imageUrl:
       'https://images.unsplash.com/photo-1588702547919-26089e690ecc?auto=format&fit=crop&w=800&q=80',
     stock: 22,
@@ -98,7 +98,7 @@ const sampleProducts = [
     description:
       'Aircraft-grade aluminum chassis with hot-swappable linear yellow switches, PBT double-shot keycaps, per-key RGB backlighting, and detachable braided USB-C cable.',
     category: 'Electronics',
-    pricePaise: 429900, // ₹4,299.00
+    pricePaise: 100, // ₹1.00
     imageUrl:
       'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=800&q=80',
     stock: 35,
@@ -110,7 +110,7 @@ const sampleProducts = [
     description:
       'Sculpted ergonomic design with quiet click switches, hyper-fast MagSpeed scrolling wheel, multi-device Bluetooth/2.4GHz connectivity, and USB-C quick recharge.',
     category: 'Electronics',
-    pricePaise: 199900, // ₹1,999.00
+    pricePaise: 100, // ₹1.00
     imageUrl:
       'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?auto=format&fit=crop&w=800&q=80',
     stock: 50,
@@ -122,7 +122,7 @@ const sampleProducts = [
     description:
       'Next-generation Gallium Nitride (GaN) desktop charging station with 3x USB-C PD 3.0 ports and 1x USB-A port capable of fast-charging laptops, tablets, and phones simultaneously.',
     category: 'Electronics',
-    pricePaise: 219900, // ₹2,199.00
+    pricePaise: 100, // ₹1.00
     imageUrl:
       'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?auto=format&fit=crop&w=800&q=80',
     stock: 45,
@@ -136,7 +136,7 @@ const sampleProducts = [
     description:
       'Cinema-smooth video stabilization with built-in extendable selfie rod, AI face/object tracking, magnetic quick-release clamp, and gesture controls for content creators.',
     category: 'Photography',
-    pricePaise: 699900, // ₹6,999.00
+    pricePaise: 100, // ₹1.00
     imageUrl:
       'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=800&q=80',
     stock: 12,
@@ -148,7 +148,7 @@ const sampleProducts = [
     description:
       'Rugged waterproof action camera shooting 4K/60fps video with 6-axis electronic image stabilization, front selfie screen, and voice control.',
     category: 'Photography',
-    pricePaise: 949900, // ₹9,499.00
+    pricePaise: 100, // ₹1.00
     imageUrl:
       'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?auto=format&fit=crop&w=800&q=80',
     stock: 8,
@@ -162,7 +162,7 @@ const sampleProducts = [
     description:
       'Weatherproof ballistic nylon commuter backpack with dedicated 16-inch padded laptop sleeve, hidden anti-theft RFID pocket, and integrated USB charging port.',
     category: 'Accessories',
-    pricePaise: 289900, // ₹2,899.00
+    pricePaise: 100, // ₹1.00
     imageUrl:
       'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=800&q=80',
     stock: 20,
@@ -174,7 +174,7 @@ const sampleProducts = [
     description:
       'Ultra-slim space-grade titanium cardholder holding up to 12 cards and cash with elastic cash strap and certified RFID blocking protection.',
     category: 'Accessories',
-    pricePaise: 149900, // ₹1,499.00
+    pricePaise: 100, // ₹1.00
     imageUrl:
       'https://images.unsplash.com/photo-1627123424574-724758594e93?auto=format&fit=crop&w=800&q=80',
     stock: 3, // Low stock indicator test
@@ -186,7 +186,7 @@ const sampleProducts = [
     description:
       'Machined solid aluminum desktop phone stand with 360-degree ball joint and ultra-strong N52 neodymium magnets for portrait and landscape viewing.',
     category: 'Accessories',
-    pricePaise: 99900, // ₹999.00
+    pricePaise: 100, // ₹1.00
     imageUrl:
       'https://images.unsplash.com/photo-1586105251261-72a756497a11?auto=format&fit=crop&w=800&q=80',
     stock: 0, // Out of stock indicator test
@@ -203,7 +203,7 @@ async function seedDatabase() {
     console.log('[SEED] Clearing existing products collection...');
     await Product.deleteMany({});
 
-    console.log(`[SEED] Inserting ${sampleProducts.length} realistic sample products...`);
+    console.log(`[SEED] Inserting ${sampleProducts.length} realistic sample products at 100 paise (₹1.00)...`);
     const inserted = await Product.create(sampleProducts);
 
     console.log(`[SEED SUCCESS] Successfully seeded ${inserted.length} products!`);

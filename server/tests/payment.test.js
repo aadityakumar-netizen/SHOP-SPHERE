@@ -62,9 +62,39 @@ async function runPaymentTests() {
   const razorpayOrderId = rzpData.razorpayOrderId;
   console.log(`✓ 3. Initialized Razorpay order: ${razorpayOrderId}`);
 
-  // 4. Test Invalid HMAC-SHA256 Signature (Must Fail and NOT mark order paid)
-  const invalidSignature = 'invalid_tampered_signature_1234567890abcdef';
+  // 3a. Verify Key ID is Test Mode, currency is INR, and amount matches integer paise
+  if (rzpData.keyId.startsWith('rzp_live_')) {
+    throw new Error('Security failure: Live mode key detected in payment initialization!');
+  }
+  if (rzpData.currency !== 'INR') {
+    throw new Error(`Currency failure: Expected INR, got ${rzpData.currency}`);
+  }
+  if (rzpData.amount !== orderData.order.totalAmountPaise) {
+    throw new Error(`Amount mismatch: Expected ${orderData.order.totalAmountPaise} paise, got ${rzpData.amount}`);
+  }
+  console.log(`✓ 3a. Verified Test Mode key (${rzpData.keyId}), currency (INR), and integer paise (${rzpData.amount})`);
+
+  // 4a. Test Mismatched Razorpay Order ID (Must fail with order_mismatch)
   const fakePaymentId = 'pay_test_998877665544';
+  const mismatchedVerifyRes = await fetch(`${BASE_URL}/payments/verify`, {
+    method: 'POST',
+    headers: authHeaders,
+    body: JSON.stringify({
+      orderId,
+      razorpayOrderId: 'order_test_mismatched_99999',
+      razorpayPaymentId: fakePaymentId,
+      razorpaySignature: 'invalid_sig',
+    }),
+  });
+  const mismatchedData = await mismatchedVerifyRes.json();
+  if (!mismatchedData.success && mismatchedData.verificationStatus === 'order_mismatch') {
+    console.log('✓ 4a. Security Check: Order ID mismatch was REJECTED with order_mismatch status');
+  } else {
+    throw new Error('Security failure: Mismatched order ID was not rejected with order_mismatch!');
+  }
+
+  // 4b. Test Invalid HMAC-SHA256 Signature (Must Fail and NOT mark order paid)
+  const invalidSignature = 'invalid_tampered_signature_1234567890abcdef';
 
   const invalidVerifyRes = await fetch(`${BASE_URL}/payments/verify`, {
     method: 'POST',
@@ -77,8 +107,8 @@ async function runPaymentTests() {
     }),
   });
   const invalidData = await invalidVerifyRes.json();
-  if (!invalidData.success && invalidVerifyRes.status === 400) {
-    console.log('✓ 4. Security Check: Invalid signature was REJECTED with 400 Bad Request');
+  if (!invalidData.success && invalidVerifyRes.status === 400 && invalidData.verificationStatus === 'signature_invalid') {
+    console.log('✓ 4b. Security Check: Invalid signature was REJECTED with 400 Bad Request and signature_invalid');
   } else {
     throw new Error('Security failure: Invalid signature was accepted!');
   }
@@ -126,6 +156,33 @@ async function runPaymentTests() {
     throw new Error('Idempotency failure: ' + JSON.stringify(duplicateData));
   }
 
+  // 6b. Test Diagnostic Payment Failure Logging with sensitive card sanitization
+  const logFailureRes = await fetch(`${BASE_URL}/payments/log-failure`, {
+    method: 'POST',
+    headers: authHeaders,
+    body: JSON.stringify({
+      orderId,
+      razorpayOrderId,
+      errorCode: 'BAD_REQUEST_ERROR',
+      errorDescription: 'Order id is not valid. Simulated sensitive card: 4111-1111-1111-1111 cvv 123',
+      errorSource: 'gateway',
+      errorStep: 'payment_initiation',
+      errorReason: 'payment_failed',
+      razorpayPaymentId: 'pay_failed_sample',
+    }),
+  });
+  const logFailureData = await logFailureRes.json();
+  if (
+    logFailureRes.status === 200 &&
+    logFailureData.diagnosticLogged === true &&
+    !logFailureData.sanitizedMessage.includes('4111-1111-1111-1111') &&
+    !logFailureData.sanitizedMessage.includes('123')
+  ) {
+    console.log('✓ 6b. Diagnostics Check: Failure logged safely with sensitive card/CVV data redacted');
+  } else {
+    throw new Error('Diagnostics failure: Failed to log failure or sensitive numbers were leaked!');
+  }
+
   // 7. Create a second order to test Webhook handling
   const orderRes2 = await fetch(`${BASE_URL}/orders`, {
     method: 'POST',
@@ -144,14 +201,14 @@ async function runPaymentTests() {
   });
   const orderData2 = await orderRes2.json();
   const orderId2 = orderData2.order._id;
-  const webhookRzpOrderId = `order_test_${orderId2.slice(-14)}`;
-
   // Update order with the razorpayOrderId
   const createRzpRes2 = await fetch(`${BASE_URL}/payments/create-order`, {
     method: 'POST',
     headers: authHeaders,
     body: JSON.stringify({ orderId: orderId2 }),
   });
+  const createRzpData2 = await createRzpRes2.json();
+  const webhookRzpOrderId = createRzpData2.razorpayOrderId;
 
   // 8. Test Webhook with Invalid Signature
   const webhookBodyString = JSON.stringify({

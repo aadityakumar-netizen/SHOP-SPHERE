@@ -30,7 +30,7 @@ export default function AdminProductModal({
     } else {
       setName('');
       setCategory(categories[0] || 'Electronics');
-      setPriceRupees('1999');
+      setPriceRupees('1');
       setStock('25');
       setImageUrl(
         'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80'
