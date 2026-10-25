@@ -1,3 +1,4 @@
+
 import mongoose from 'mongoose';
 
 const orderItemSchema = new mongoose.Schema(
@@ -25,7 +26,6 @@ const orderItemSchema = new mongoose.Schema(
         message: '{VALUE} is not an integer quantity',
       },
     },
-    // Stored as integer paise at the time of purchase (snapshot)
     pricePaise: {
       type: Number,
       required: [true, 'Unit price in paise is required'],
@@ -95,9 +95,7 @@ const orderSchema = new mongoose.Schema(
     orderItems: {
       type: [orderItemSchema],
       validate: {
-        validator: function (items) {
-          return Array.isArray(items) && items.length > 0;
-        },
+        validator: (items) => Array.isArray(items) && items.length > 0,
         message: 'An order must contain at least one item',
       },
     },
@@ -137,18 +135,44 @@ const orderSchema = new mongoose.Schema(
       default: 'INR',
       enum: ['INR'],
     },
+
+    // "demo" is separate from a real Razorpay transaction.
+    paymentMethod: {
+      type: String,
+      enum: ['razorpay', 'cod', 'demo'],
+      default: 'razorpay',
+      required: true,
+    },
+
+    // Used only when paymentMethod is "demo".
+    demoPaymentMethod: {
+      type: String,
+      enum: ['card', 'netbanking', 'wallet', null],
+      default: null,
+    },
+
+    // Demo completion never means that money was transferred.
+    demoPaymentStatus: {
+      type: String,
+      enum: ['not_started', 'completed'],
+      default: 'not_started',
+    },
+
     orderStatus: {
       type: String,
       enum: ['placed', 'processing', 'shipped', 'delivered', 'cancelled'],
       default: 'placed',
       index: true,
     },
+
+    // "paid" is reserved for verified real gateway payments.
     paymentStatus: {
       type: String,
       enum: ['pending', 'paid', 'failed'],
       default: 'pending',
       index: true,
     },
+
     razorpayOrderId: {
       type: String,
       sparse: true,
@@ -172,7 +196,6 @@ const orderSchema = new mongoose.Schema(
   }
 );
 
-// Virtual for total amount in Rupees
 orderSchema.virtual('totalAmountRupees').get(function () {
   return this.totalAmountPaise / 100;
 });

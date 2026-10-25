@@ -1,11 +1,13 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 import Order from '../models/Order.js';
 import Product from '../models/Product.js';
+import User from '../models/User.js';
+import { sendOrderConfirmationEmail } from '../services/email.service.js';
 
 /**
  * Helper to calculate shipping fee in paise
- * By default in test mode with ₹1 products, free delivery applies (0 additional charges)
- * so 1 item at ₹1 creates a Razorpay order for exactly 100 paise.
+ * By default in test mode with â‚¹1 products, free delivery applies (0 additional charges)
+ * so 1 item at â‚¹1 creates a Razorpay order for exactly 100 paise.
  */
 const calculateShippingPaise = (subtotalPaise) => {
   if (process.env.ENFORCE_SHIPPING_FEE === 'true') {
@@ -113,7 +115,18 @@ export const createOrder = async (req, res, next) => {
   const decrementedItems = []; // Tracking for safe rollback on failure
 
   try {
-    const { items, shippingAddress } = req.body;
+    const {
+  items,
+  shippingAddress,
+  paymentMethod = 'razorpay',
+  demoPaymentMethod = null,
+} = req.body;
+if (!['razorpay', 'cod', 'demo'].includes(paymentMethod)) {
+  return res.status(400).json({
+    success: false,
+    message: 'Invalid payment method.',
+  });
+}
 
     // Validate items
     if (!Array.isArray(items) || items.length === 0) {
@@ -238,16 +251,45 @@ export const createOrder = async (req, res, next) => {
 
     // 4. Create Order document in MongoDB
     const order = await Order.create({
-      user: req.user._id,
-      orderItems,
-      shippingAddress: cleanAddress,
-      subtotalPaise,
-      shippingPaise,
-      totalAmountPaise,
-      currency: 'INR',
-      orderStatus: 'placed',
-      paymentStatus: 'pending',
-    });
+  user: req.user._id,
+  orderItems,
+  shippingAddress: cleanAddress,
+  subtotalPaise,
+  shippingPaise,
+  totalAmountPaise,
+  currency: 'INR',
+  paymentMethod,
+  demoPaymentMethod: paymentMethod === 'demo' ? demoPaymentMethod : null,
+  demoPaymentStatus: 'not_started',
+  orderStatus: 'placed',
+  paymentStatus: 'pending',
+});
+
+    // Send confirmation email immediately for Cash on Delivery orders only.
+    // Email failures must not undo a successfully created order.
+    if (paymentMethod === 'cod') {
+      try {
+        const user = await User.findById(req.user._id).select('name email');
+
+        if (user?.email) {
+          await sendOrderConfirmationEmail({
+            to: user.email,
+            customerName: order.shippingAddress.fullName || user.name,
+            orderId: order._id.toString(),
+            orderItems: order.orderItems,
+            totalAmountPaise: order.totalAmountPaise,
+            paymentMethod: 'Cash on Delivery (COD)',
+            paymentStatus: 'pending',
+            shippingAddress: order.shippingAddress,
+          });
+          console.log('COD order confirmation email sent:', order._id.toString());
+        } else {
+          console.warn('COD order created, but the customer email was not found.');
+        }
+      } catch (emailError) {
+        console.error('COD order created, but confirmation email failed:', emailError.message);
+      }
+    }
 
     res.status(201).json({
       success: true,
@@ -406,3 +448,4 @@ export default {
   getOrderById,
   cancelOrder,
 };
+

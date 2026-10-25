@@ -1,6 +1,8 @@
 import mongoose from 'mongoose';
 import Order from '../models/Order.js';
 import WebhookEvent from '../models/WebhookEvent.js';
+import User from '../models/User.js';
+import { sendOrderConfirmationEmail } from '../services/email.service.js';
 import env from '../config/env.js';
 import {
   isRazorpayConfigured,
@@ -248,6 +250,32 @@ export const verifyPayment = async (req, res, next) => {
     await order.save();
 
     console.log(`[PAYMENT VERIFIED SUCCESS] Order #${order._id} verified and marked as PAID (Payment ID: ${razorpayPaymentId})`);
+    // Send confirmation email after successful payment verification.
+    // Email failures must not interrupt checkout.
+    try {
+      const customer = await User.findById(order.user).select('name email');
+
+      if (customer?.email) {
+        const emailResult = await sendOrderConfirmationEmail({
+          to: customer.email,
+          customerName: customer.name,
+          orderId: order._id.toString(),
+          orderItems: order.orderItems,
+          totalAmountPaise: order.totalAmountPaise,
+          paymentMethod: 'Razorpay',
+          paymentStatus: 'paid',
+          shippingAddress: order.shippingAddress,
+        });
+
+        if (!emailResult.sent) {
+          console.warn('[EMAIL] Confirmation email was not sent:', emailResult.reason);
+        }
+      } else {
+        console.warn('[EMAIL] Customer email not found for order:', order._id);
+      }
+    } catch (emailError) {
+      console.error('[EMAIL] Confirmation email failed:', emailError.message);
+    }
 
     res.status(200).json({
       success: true,
@@ -442,6 +470,89 @@ export const handleWebhook = async (req, res, next) => {
       success: true,
       received: true,
       message: 'Webhook processed successfully.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route   POST /api/v1/payments/demo/complete
+ * @desc    Complete a demo payment simulation only
+ * @access  Private (Customer/Admin)
+ */
+export const completeDemoPayment = async (req, res, next) => {
+  try {
+    const { orderId, demoPaymentMethod } = req.body;
+
+    if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'A valid orderId is required.',
+      });
+    }
+
+    if (!['card', 'netbanking', 'wallet'].includes(demoPaymentMethod)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid demo payment method.',
+      });
+    }
+
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found.',
+      });
+    }
+
+    const isOwner = String(order.user) === String(req.user._id);
+    const isAdmin = req.user.role === 'admin';
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. You do not own this order.',
+      });
+    }
+
+    if (order.orderStatus === 'cancelled') {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot complete a demo payment for a cancelled order.',
+      });
+    }
+
+    if (
+      order.paymentMethod !== 'demo' ||
+      order.demoPaymentMethod !== demoPaymentMethod
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: 'The selected demo payment method does not match this order.',
+      });
+    }
+
+    if (order.paymentStatus === 'paid') {
+      return res.status(400).json({
+        success: false,
+        message: 'This order has already been paid through a verified payment.',
+      });
+    }
+
+    if (order.demoPaymentStatus !== 'completed') {
+      order.demoPaymentStatus = 'completed';
+      await order.save();
+    }
+
+    return res.status(200).json({
+      success: true,
+      demo: true,
+      message:
+        'Demo simulation completed. No money was charged, and the order is not marked as paid.',
+      order,
     });
   } catch (error) {
     next(error);
